@@ -139,7 +139,7 @@ module VagrantPlugins
 
           # Sync them!
           folders.each do |id, folder_opts|
-            RsyncHelper.rsync_single(machine, ssh_info, folder_opts, true)
+            VagrantPlugins::SyncedFolderRSync::RsyncHelper.rsync_single(machine, ssh_info, folder_opts, true)
           end
         end
 
