@@ -24,7 +24,7 @@ module VagrantPlugins
         I18n.reload!
       end
 
-      command "rsync-back" do
+      command("rsync-back", primary: false) do
         setup_i18n
 
         require_relative "command/rsync_back"
