@@ -27,8 +27,8 @@ module VagrantPlugins
       command "rsync-back" do
         setup_i18n
 
-        require_relative "command/rsync_auto"
-        RsyncBack
+        require_relative "command/rsync_back"
+        RsyncBackCommand
       end
     end
   end
