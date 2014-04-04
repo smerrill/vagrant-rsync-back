@@ -1,17 +1,17 @@
 require "vagrant"
 
 module VagrantPlugins
-  module GatlingRsync
+  module RsyncBack
     module Errors
-      class VagrantGatlingRsyncError < Vagrant::Errors::VagrantError
-        error_namespace("vagrant_gatling_rsync.errors")
+      class VagrantRsyncBackError < Vagrant::Errors::VagrantError
+        error_namespace("vagrant_rsync_back.errors")
       end
 
-      class OnlyOSXLinuxSupportError < VagrantGatlingRsyncError
+      class OnlyOSXLinuxSupportError < VagrantRsyncBackError
         error_key(:only_osx_linux_support)
       end
 
-      class Vagrant15RequiredError < VagrantGatlingRsyncError
+      class Vagrant15RequiredError < VagrantRsyncBackError
         error_key(:vagrant_15_required)
       end
     end

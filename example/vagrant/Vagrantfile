@@ -13,9 +13,4 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # argument is a set of non-required options.
   config.vm.synced_folder "../files", "/opt/vagrant/rsynced_folder", type: "rsync",
     rsync__exclude: [".git/", ".idea/"]
-
-  # Configure the window for gatling to coalesce writes.
-  if Vagrant.has_plugin?("vagrant-gatling-rsync")
-    config.gatling.latency = 2.5
-  end
 end

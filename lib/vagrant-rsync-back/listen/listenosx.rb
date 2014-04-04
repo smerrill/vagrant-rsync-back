@@ -1,7 +1,7 @@
 require "rb-fsevent"
 
 module VagrantPlugins
-  module GatlingRsync
+  module RsyncBack
     class ListenOSX
       def initialize(paths, ignores, latency, logger, callback)
         @paths = paths

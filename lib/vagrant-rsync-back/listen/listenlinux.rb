@@ -1,7 +1,7 @@
 require "rb-inotify"
 
 module VagrantPlugins
-  module GatlingRsync
+  module RsyncBack
     class ListenLinux
       def initialize(paths, ignores, latency, logger, callback)
         @paths = paths

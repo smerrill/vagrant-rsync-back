@@ -1,7 +1,7 @@
 require "vagrant"
 
 module VagrantPlugins
-  module GatlingRsync
+  module RsyncBack
     class Config < Vagrant.plugin("2", :config)
       attr_accessor :latency
 

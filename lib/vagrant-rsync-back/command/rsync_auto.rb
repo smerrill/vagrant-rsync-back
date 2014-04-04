@@ -4,8 +4,8 @@ require "optparse"
 require "vagrant"
 
 module VagrantPlugins
-  module GatlingRsync
-    class GatlingRsyncAuto < Vagrant.plugin(2, :command)
+  module RsyncBack
+    class RsyncBackAuto < Vagrant.plugin(2, :command)
       include Vagrant::Action::Builtin::MixinSyncedFolders
 
       def self.synopsis
@@ -13,10 +13,10 @@ module VagrantPlugins
       end
 
       def execute
-        @logger = Log4r::Logger.new("vagrant::commands::gatling-rsync-auto")
+        @logger = Log4r::Logger.new("vagrant::commands::rsync-back")
 
         opts = OptionParser.new do |o|
-          o.banner = "Usage: vagrant gatling-rsync-auto [vm-name]"
+          o.banner = "Usage: vagrant rsync-back [vm-name]"
           o.separator ""
         end
 

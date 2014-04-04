@@ -3,7 +3,7 @@
 require "wdm"
 
 module VagrantPlugins
-  module GatlingRsync
+  module RsyncBack
     class ListenWindows
       def initialize(paths, ignores, latency, logger, callback)
         @paths = paths
