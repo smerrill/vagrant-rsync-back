@@ -3,101 +3,108 @@ require "optparse"
 
 require "vagrant"
 
-# MONKEYPATCH!!11!1!
-module VagrantPlugins
-  module SyncedFolderRSync
-    class RsyncHelper
-      def self.get_rsync_command(machine, ssh_info, opts)
-        # Folder info
-        guestpath = opts[:guestpath]
-        hostpath  = opts[:hostpath]
-        hostpath  = File.expand_path(hostpath, machine.env.root_path)
-        hostpath  = Vagrant::Util::Platform.fs_real_path(hostpath).to_s
+# Monkeypatch RsyncHelper for now. Maybe merge this into Vagrant proper?
+require Vagrant.source_root.join("plugins/synced_folders/rsync/helper")
+VagrantPlugins::SyncedFolderRSync::RsyncHelper.class_eval do
+  def self.rsync_single(machine, ssh_info, opts, rsync_back=false)
+    # Folder info
+    guestpath = opts[:guestpath]
+    hostpath  = opts[:hostpath]
+    hostpath  = File.expand_path(hostpath, machine.env.root_path)
+    hostpath  = Vagrant::Util::Platform.fs_real_path(hostpath).to_s
 
-        if Vagrant::Util::Platform.windows?
-          # rsync for Windows expects cygwin style paths, always.
-          hostpath = Vagrant::Util::Platform.cygwin_path(hostpath)
-        end
+    if Vagrant::Util::Platform.windows?
+      # rsync for Windows expects cygwin style paths, always.
+      hostpath = Vagrant::Util::Platform.cygwin_path(hostpath)
+    end
 
-        # Make sure the host path ends with a "/" to avoid creating
-        # a nested directory...
-        if !hostpath.end_with?("/")
-          hostpath += "/"
-        end
-
-        # Folder options
-        opts[:owner] ||= ssh_info[:username]
-        opts[:group] ||= ssh_info[:username]
-
-        # Connection information
-        username = ssh_info[:username]
-        host     = ssh_info[:host]
-        rsh = [
-          "ssh -p #{ssh_info[:port]} -o StrictHostKeyChecking=no",
-          ssh_info[:private_key_path].map { |p| "-i '#{p}'" },
-        ].flatten.join(" ")
-
-        # Exclude some files by default, and any that might be configured
-        # by the user.
-        excludes = ['.vagrant/']
-        excludes += Array(opts[:exclude]).map(&:to_s) if opts[:exclude]
-        excludes.uniq!
-
-        # Get the command-line arguments
-        args = nil
-        args = Array(opts[:args]) if opts[:args]
-        args ||= ["--verbose", "--archive", "--delete", "-z"]
-
-        # On Windows, we have to set the chmod flag to avoid permission issues
-        if Vagrant::Util::Platform.windows?
-          args << "--chmod=ugo=rwX"
-        end
-
-        # Build up the actual command to execute
-        [
-          "rsync",
-          args,
-          "-e", rsh,
-          excludes.map { |e| ["--exclude", e] },
-          hostpath,
-          "#{username}@#{host}:#{guestpath}",
-        ]
+    # Make sure the host path ends with a "/" to avoid creating
+    # a nested directory...
+    if rsync_back
+      if !guestpath.end_with?("/")
+        guestpath += "/"
       end
-
-      def self.rsync_single(machine, ssh_info, opts, rsync_back=false)
-        command_parts = get_rsync_command(machine, ssh_info, opts)
-        command_parts = command_parts.concat(command_parts.slice!(-2, 2).reverse) if rsync_back
-        command = command_parts.flatten
-        # The working directory should be the root path
-        command_opts = {}
-        command_opts[:workdir] = machine.env.root_path.to_s
-
-        machine.ui.info(I18n.t(
-          "vagrant.rsync_folder", guestpath: guestpath, hostpath: hostpath))
-        if excludes.length > 1
-          machine.ui.info(I18n.t(
-            "vagrant.rsync_folder_excludes", excludes: excludes.inspect))
-        end
-
-        # If we have tasks to do before rsyncing, do those.
-        if machine.guest.capability?(:rsync_pre)
-          machine.guest.capability(:rsync_pre, opts) unless rsync_back
-        end
-
-        r = Vagrant::Util::Subprocess.execute(*(command + [command_opts]))
-        if r.exit_code != 0
-          raise Vagrant::Errors::RSyncError,
-            command: command.join(" "),
-            guestpath: guestpath,
-            hostpath: hostpath,
-            stderr: r.stderr
-        end
-
-        # If we have tasks to do after rsyncing, do those.
-        if machine.guest.capability?(:rsync_post)
-          machine.guest.capability(:rsync_post, opts) unless rsync_back
-        end
+    else
+      if !hostpath.end_with?("/")
+        hostpath += "/"
       end
+    end
+
+    # Folder options
+    opts[:owner] ||= ssh_info[:username]
+    opts[:group] ||= ssh_info[:username]
+
+    # Connection information
+    username = ssh_info[:username]
+    host     = ssh_info[:host]
+    rsh = [
+      "ssh -p #{ssh_info[:port]} -o StrictHostKeyChecking=no",
+      ssh_info[:private_key_path].map { |p| "-i '#{p}'" },
+    ].flatten.join(" ")
+
+    # Exclude some files by default, and any that might be configured
+    # by the user.
+    excludes = ['.vagrant/']
+    excludes += Array(opts[:exclude]).map(&:to_s) if opts[:exclude]
+    excludes.uniq!
+
+    # Get the command-line arguments
+    args = nil
+    args = Array(opts[:args]) if opts[:args]
+    args ||= ["--verbose", "--archive", "--delete", "-z"]
+
+    # On Windows, we have to set the chmod flag to avoid permission issues
+    if Vagrant::Util::Platform.windows?
+      args << "--chmod=ugo=rwX"
+    end
+
+    # Build up the actual command to execute
+    command_parts = [
+      "rsync",
+      args,
+      "-e", rsh,
+      excludes.map { |e| ["--exclude", e] },
+      hostpath,
+      "#{username}@#{host}:#{guestpath}",
+    ]
+
+    command_parts = command_parts.concat(command_parts.slice!(-2, 2).reverse) if rsync_back
+    command = command_parts.flatten
+
+    # The working directory should be the root path
+    command_opts = {}
+    command_opts[:workdir] = machine.env.root_path.to_s
+
+    if rsync_back
+      machine.ui.info(I18n.t(
+        "vagrant.rsync_folder", guestpath: hostpath, hostpath: guestpath))
+    else
+      machine.ui.info(I18n.t(
+        "vagrant.rsync_folder", guestpath: guestpath, hostpath: hostpath))
+    end
+
+    if excludes.length > 1
+      machine.ui.info(I18n.t(
+        "vagrant.rsync_folder_excludes", excludes: excludes.inspect))
+    end
+
+    # If we have tasks to do before rsyncing, do those.
+    if machine.guest.capability?(:rsync_pre)
+      machine.guest.capability(:rsync_pre, opts) unless rsync_back
+    end
+
+    r = Vagrant::Util::Subprocess.execute(*(command + [command_opts]))
+    if r.exit_code != 0
+      raise Vagrant::Errors::RSyncError,
+        command: command.join(" "),
+        guestpath: guestpath,
+        hostpath: hostpath,
+        stderr: r.stderr
+    end
+
+    # If we have tasks to do after rsyncing, do those.
+    if machine.guest.capability?(:rsync_post)
+      machine.guest.capability(:rsync_post, opts) unless rsync_back
     end
   end
 end
