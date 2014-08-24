@@ -21,13 +21,9 @@ VagrantPlugins::SyncedFolderRSync::RsyncHelper.class_eval do
     # Make sure the host path ends with a "/" to avoid creating
     # a nested directory...
     if rsync_back
-      if !guestpath.end_with?("/")
-        guestpath += "/"
-      end
+      guestpath += "/" unless guestpath.end_with?("/")
     else
-      if !hostpath.end_with?("/")
-        hostpath += "/"
-      end
+      hostpath += "/" unless hostpath.end_with?("/")
     end
 
     # Folder options
