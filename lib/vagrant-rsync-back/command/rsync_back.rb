@@ -15,7 +15,7 @@ VagrantPlugins::SyncedFolderRSync::RsyncHelper.class_eval do
 
     if Vagrant::Util::Platform.windows?
       # rsync for Windows expects cygwin style paths, always.
-      hostpath = Vagrant::Util::Platform.cygwin_path(hostpath)
+      hostpath = "/cygdrive" + Vagrant::Util::Platform.cygwin_path(hostpath)
     end
 
     # Make sure the host path ends with a "/" to avoid creating
