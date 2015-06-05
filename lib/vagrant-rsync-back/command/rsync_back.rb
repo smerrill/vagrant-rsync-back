@@ -47,7 +47,7 @@ VagrantPlugins::SyncedFolderRSync::RsyncHelper.class_eval do
     # Get the command-line arguments
     args = nil
     args = Array(opts[:args]) if opts[:args]
-    args ||= ["--verbose", "--archive", "--delete", "-z"]
+    args ||= ["--verbose", "--archive", "-z"]
 
     # On Windows, we have to set the chmod flag to avoid permission issues
     if Vagrant::Util::Platform.windows?
